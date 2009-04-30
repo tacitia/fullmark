@@ -1,0 +1,5 @@
+1. what's the result of procedure 10 if we have no records in database?
+
+NT 0
+HK 0            ?
+KLN 0
