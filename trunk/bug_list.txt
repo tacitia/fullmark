@@ -1,0 +1,3 @@
+difficulty:
+connect to oracle
+
