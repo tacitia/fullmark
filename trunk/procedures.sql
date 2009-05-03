@@ -42,11 +42,19 @@ CREATE OR REPLACE PROCEDURE FindAvailEng
 BEGIN
 	InDate := TO_DATE(InstDate, 'YYMMDD');
 	OPEN Result FOR
-		SELECT eng_id, name, resp_district, count(*)
-		FROM Installations NATURAL JOIN Engineers
+		SELECT eng_id, name, resp_district, count(task_ID)
+		FROM Engineers
+		NATURAL JOIN Installations
 		WHERE Install_date = InDate
 		GROUP BY eng_id, name, resp_district
-		HAVING count(*) < 4;
+		HAVING count(task_ID) < 4
+		UNION
+		SELECT eng_id, name, resp_district, 0
+		FROM Engineers e
+		WHERE eng_id not in (SELECT eng_id
+						FROM Engineers
+						NATURAL JOIN Installations
+						WHERE Install_date = InDate);
 End;
 /
 
@@ -57,11 +65,20 @@ CREATE OR REPLACE PROCEDURE FindAvailEngD
 BEGIN
 	InDate := TO_DATE(InstDate, 'YYMMDD');
 	OPEN Result FOR
-		SELECT eng_id, name, count(*)
-		FROM Installations NATURAL JOIN Engineers
+		SELECT eng_id, name, count(task_ID)
+		FROM Engineers
+		NATURAL JOIN Installations
 		WHERE Install_date = InDate AND resp_district = District
 		GROUP BY eng_id, name
-		HAVING count(*) < 4;
+		HAVING count(task_ID) < 4
+		UNION
+		SELECT eng_id, name, 0
+		FROM Engineers
+		WHERE resp_district = District AND eng_id not in (SELECT eng_id
+										      FROM Engineers
+										      NATURAL JOIN Installations
+										      WHERE Install_date = InDate AND resp_district = District);
+		
 End;
 /
 
@@ -76,6 +93,7 @@ CREATE OR REPLACE PROCEDURE AssginInstTask
 	tempLoad	NUMBER;
 	taskID	Installations.Task_ID%type;
 BEGIN
+
 	ErrCode := 0;
 	isInstalled := FALSE;
 	minLoad := 4;
@@ -94,6 +112,9 @@ BEGIN
 	/*initialize taskID*/
 	SELECT MAX(Task_ID) + 1 INTO taskID
 		FROM Installations;
+	IF taskID IS NULL THEN
+		taskID := 000001;
+	END IF;
 	
 	/*check whether it's installed*/
 	FOR R IN(
@@ -182,14 +203,15 @@ CREATE OR REPLACE PROCEDURE AssginInstTaskA
 	ntAvailEngList	SYS_REFCURSOR;
 BEGIN
 	NotAssigned := 0;
-	ErrCode := 1;
+
 	FOR R IN(
 		SELECT s.Sub_ID Sub_ID, Prefer_install_date, District
 		FROM Subscriptions s
 		LEFT OUTER JOIN Installations i
 		ON s.Sub_ID = i.Sub_ID
 		WHERE i.Sub_ID IS NULL)LOOP
-		charDate := to_char(R.Prefer_install_date, 'yymmdd');
+		charDate := to_char(R.Prefer_install_date, 'yymmdd');	
+		ErrCode := 1;
 		FindAvailEngD(charDate, R.District, availEngList);
 		LOOP
 			FETCH availEngList INTO EID, EName, workLoad;
@@ -230,7 +252,6 @@ BEGIN
 				END IF;
 			END IF;
 		END IF;
-
 		IF ErrCode = 1 THEN
 			NotAssigned := NotAssigned + 1;
 		END IF; 
