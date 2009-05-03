@@ -279,12 +279,18 @@ BEGIN
 	startDate := to_date(SDate, 'yymmdd');
 	endDate := to_date(EDate,  'yymmdd');
 	OPEN Result FOR
-		SELECT e.Eng_ID, e.Name, COUNT(i.Task_ID)
-			FROM Engineers e
-			LEFT OUTER JOIN Installations i
-			ON e.Eng_ID = i.Eng_ID
-			WHERE (i.Install_date >= startDate AND i.Install_date <= endDate) OR i.Install_date IS NULL
-			GROUP BY e.Eng_ID, e.Name;
+		SELECT Eng_ID, Name, COUNT(Task_ID)
+		FROM Engineers
+		NATURAL JOIN Installations
+		WHERE Install_date >= startDate AND Install_date <= endDate
+		GROUP BY Eng_ID, Name
+		UNION
+		SELECT Eng_ID, Name, 0
+		FROM Engineers
+		WHERE Eng_ID NOT IN (SELECT Eng_ID
+						  FROM Engineers
+						  NATURAL JOIN Installations
+						  WHERE Install_date >= startDate AND Install_date <= endDate);
 END;
 /
 

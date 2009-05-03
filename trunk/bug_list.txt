@@ -9,4 +9,6 @@ bugs:
 
 3. in procedure AssignInstTaskA(fixed)
 
-4. change wrong spelling "assgin" to be "assign"
+4. in procedure 9 (fixed)
+
+5. change wrong spelling "assgin" to be "assign"
