@@ -1,3 +1,9 @@
 difficulty:
 connect to oracle
 
+bug:
+1. in procedure FindAvailEngD 
+group by eng_id -->  group by eng_id, name
+
+2. in procedure FindAvailEng
+group by eng_id --> group by eng_id, name, resp_district

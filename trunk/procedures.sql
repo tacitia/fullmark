@@ -45,7 +45,7 @@ BEGIN
 		SELECT eng_id, name, resp_district, count(*)
 		FROM Installations NATURAL JOIN Engineers
 		WHERE Install_date = InDate
-		GROUP BY eng_id
+		GROUP BY eng_id, name, resp_district
 		HAVING count(*) < 4;
 End;
 /
@@ -60,7 +60,7 @@ BEGIN
 		SELECT eng_id, name, count(*)
 		FROM Installations NATURAL JOIN Engineers
 		WHERE Install_date = InDate AND resp_district = District
-		GROUP BY eng_id
+		GROUP BY eng_id, name
 		HAVING count(*) < 4;
 End;
 /
@@ -175,6 +175,7 @@ CREATE OR REPLACE PROCEDURE AssginInstTaskA
 	EID	Engineers.Eng_ID%type;
 	EName	Engineers.Name%type;
 	workLoad	NUMBER;
+	charDate	CHAR(30);
 	availEngList		SYS_REFCURSOR;
 	hkAvailEngList	SYS_REFCURSOR;
 	klnAvailEngList	SYS_REFCURSOR;
@@ -188,6 +189,7 @@ BEGIN
 		LEFT OUTER JOIN Installations i
 		ON s.Sub_ID = i.Sub_ID
 		WHERE i.Sub_ID IS NULL)LOOP
+		charDate := to_char(R.Prefer_install_date, 'yymmdd');
 		FindAvailEngD(R.Prefer_install_date, R.District, availEngList);
 		LOOP
 			FETCH availEngList INTO EID, EName, workLoad;
@@ -198,7 +200,7 @@ BEGIN
 		CLOSE availEngList;
 		IF ErrCode = 1 THEN
 			IF R.District = 'HK' OR R.District = 'NT' THEN
-				FindAvailEngD(R.Prefer_install_date, 'KLN', klnAvailEngList);
+				FindAvailEngD(charDate, 'KLN', klnAvailEngList);
 				LOOP
 					FETCH klnAvailEngList INTO EID, EName, workLoad;
 					EXIT WHEN klnAvailEngList%NOTFOUND;
@@ -208,7 +210,7 @@ BEGIN
 				CLOSE klnAvailEngList;
 			END IF;
 			IF R.District = 'KLN' THEN
-				FindAvailEngD(R.Prefer_install_date, 'HK', hkAvailEngList);
+				FindAvailEngD(charDate, 'HK', hkAvailEngList);
 				LOOP
 					FETCH hkAvailEngList INTO EID, EName, workLoad;
 					EXIT WHEN klnAvailEngList%NOTFOUND;
@@ -217,7 +219,7 @@ BEGIN
 				END LOOP;
 				CLOSE hkAvailEngList;
 				IF ErrCode = 1 THEN
-					FindAvailEngD(R.Prefer_install_date, 'NT', ntAvailEngList);
+					FindAvailEngD(charDate, 'NT', ntAvailEngList);
 					LOOP
 						FETCH ntAvailEngList INTO EID, EName, workLoad;
 						EXIT WHEN ntAvailEngList%NOTFOUND;
