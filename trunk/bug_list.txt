@@ -6,3 +6,5 @@ bugs:
 
 
 2. in procedure FindAvailEng (fixed)
+
+3. in procedure AssignInstTaskA(fixed)
