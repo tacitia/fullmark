@@ -190,7 +190,7 @@ BEGIN
 		ON s.Sub_ID = i.Sub_ID
 		WHERE i.Sub_ID IS NULL)LOOP
 		charDate := to_char(R.Prefer_install_date, 'yymmdd');
-		FindAvailEngD(R.Prefer_install_date, R.District, availEngList);
+		FindAvailEngD(charDate, R.District, availEngList);
 		LOOP
 			FETCH availEngList INTO EID, EName, workLoad;
 			EXIT WHEN availEngList%NOTFOUND;
