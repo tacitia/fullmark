@@ -26,7 +26,7 @@ if (!$conn) {
 
 if($function == "auto") {
 	$notAssigned = 0;
-	$parse = ociparse($conn, "begin AssginInstTaskA($notAssigned); end;");
+	$parse = ociparse($conn, "begin AssignInstTaskA($notAssigned); end;");
 	ociexecute($parse);
 	if ($notAssigned == 0) {
 		echo "<h2>Assignment is completed successfully!<\h2>\n";
