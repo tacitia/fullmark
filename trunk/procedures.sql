@@ -82,7 +82,7 @@ BEGIN
 End;
 /
 
-CREATE OR REPLACE PROCEDURE AssginInstTask
+CREATE OR REPLACE PROCEDURE AssignInstTask
 	(SID IN number, EID IN number, ErrCode OUT number) AS
 	isInstalled	BOOLEAN;
 	engDistrict	Engineers.Resp_district%type;
@@ -190,7 +190,7 @@ EXCEPTION
 END;
 /
 
-CREATE OR REPLACE PROCEDURE AssginInstTaskA
+CREATE OR REPLACE PROCEDURE AssignInstTaskA
 	(NotAssigned OUT number) AS
 	ErrCode	NUMBER;
 	EID	Engineers.Eng_ID%type;
@@ -203,30 +203,34 @@ CREATE OR REPLACE PROCEDURE AssginInstTaskA
 	ntAvailEngList	SYS_REFCURSOR;
 BEGIN
 	NotAssigned := 0;
-
+	ErrCode := 1;
 	FOR R IN(
-		SELECT s.Sub_ID Sub_ID, Prefer_install_date, District
-		FROM Subscriptions s
-		LEFT OUTER JOIN Installations i
-		ON s.Sub_ID = i.Sub_ID
-		WHERE i.Sub_ID IS NULL)LOOP
-		charDate := to_char(R.Prefer_install_date, 'yymmdd');	
+		SELECT Sub_ID, Prefer_install_date, District
+		FROM Subscriptions
+		WHERE Sub_ID NOT IN (SELECT Sub_ID FROM Installations))LOOP
+		charDate := to_char(R.Prefer_install_date, 'yymmdd');
 		ErrCode := 1;
 		FindAvailEngD(charDate, R.District, availEngList);
 		LOOP
 			FETCH availEngList INTO EID, EName, workLoad;
 			EXIT WHEN availEngList%NOTFOUND;
-			AssginInstTask(R.Sub_ID, EID, ErrCode);
+			AssignInstTask(R.Sub_ID, EID, ErrCode);
 			EXIT WHEN ErrCode = 0;
 		END LOOP;
 		CLOSE availEngList;
-		IF ErrCode = 1 THEN
+	END LOOP;
+	FOR R IN(
+		SELECT Sub_ID, Prefer_install_date, District
+		FROM Subscriptions
+		WHERE Sub_id not in (SELECT Sub_id FROM Installations))LOOP
+			charDate := to_char(R.Prefer_install_date, 'yymmdd');
+			ErrCode := 1;
 			IF R.District = 'HK' OR R.District = 'NT' THEN
 				FindAvailEngD(charDate, 'KLN', klnAvailEngList);
 				LOOP
 					FETCH klnAvailEngList INTO EID, EName, workLoad;
 					EXIT WHEN klnAvailEngList%NOTFOUND;
-					AssginInstTask(R.Sub_ID, EID, ErrCode);
+					AssignInstTask(R.Sub_ID, EID, ErrCode);
 					EXIT WHEN ErrCode = 0;
 				END LOOP;
 				CLOSE klnAvailEngList;
@@ -236,7 +240,7 @@ BEGIN
 				LOOP
 					FETCH hkAvailEngList INTO EID, EName, workLoad;
 					EXIT WHEN klnAvailEngList%NOTFOUND;
-					AssginInstTask(R.Sub_ID, EID, ErrCode);
+					AssignInstTask(R.Sub_ID, EID, ErrCode);
 					EXIT WHEN ErrCode = 0;
 				END LOOP;
 				CLOSE hkAvailEngList;
@@ -245,18 +249,17 @@ BEGIN
 					LOOP
 						FETCH ntAvailEngList INTO EID, EName, workLoad;
 						EXIT WHEN ntAvailEngList%NOTFOUND;
-						AssginInstTask(R.Sub_ID, EID, ErrCode);
+						AssignInstTask(R.Sub_ID, EID, ErrCode);
 						EXIT WHEN ErrCode = 0;
 					END LOOP;
 					CLOSE ntAvailEngList;
 				END IF;
 			END IF;
-		END IF;
-		IF ErrCode = 1 THEN
-			NotAssigned := NotAssigned + 1;
-		END IF; 
+
+			IF ErrCode = 1 THEN
+				NotAssigned := NotAssigned + 1;
+			END IF; 
 	END LOOP;
-	
 END;
 /
 
