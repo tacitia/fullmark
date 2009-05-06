@@ -16,7 +16,7 @@ $engID = $_POST["eid"];
 $function = $_POST["mode"];
 ###########################################################
 #error here. Do not know how to connect to Oracle database
-$conn = ocilogon("hr", "1234", "127.0.0.1");
+$conn = ocilogon("comp231stu109", "xiaosa19890213", "comp231.cse.ust.hk);
 
 if (!$conn) {
 	echo "<h1>Unable to connect </h1>\n";
