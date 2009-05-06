@@ -1,0 +1,33 @@
+<html>
+<head>
+	<title>Assign Installation Tasks</title>
+</head>
+<body><center>
+	<h1>Installation Assignment System</h1><hr />
+	<h2>Assign Installation Tasks</h2>
+	<form method="POST" action="assign.php">
+	<table>
+	<tr>
+	<td>
+		<input type="radio" name="mode" value="auto" checked>Automatically assign installations for all new subscriptions</input><br />
+		<input type="radio" name="mode" value="indiv">Individually assign an installation using the following information</input>
+	</td>
+	</tr>
+	</table>
+	<table>
+	<tr>
+	<td>Subscription ID:</td>
+	<td><input type="text" name="sid" size=5 /></td>
+	</tr>
+	<tr>
+	<td>Engineer ID:</td>
+	<td><input type="text" name="eid" size=5 /></td>
+	</tr>
+	</table>
+	<hr>
+		<input type="submit" value="Submit" />
+	</form>
+	<form method="POST" action="main.html">
+		<input type="submit" value="Back" />
+	</form>
+</center></body>
