@@ -51,7 +51,7 @@ BEGIN
 		UNION
 		SELECT eng_id, name, resp_district, 0
 		FROM Engineers e
-		WHERE eng_id not in (SELECT eng_id
+		WHERE eng_id NOT IN(SELECT eng_id
 						FROM Engineers
 						NATURAL JOIN Installations
 						WHERE Install_date = InDate);
@@ -74,7 +74,7 @@ BEGIN
 		UNION
 		SELECT eng_id, name, 0
 		FROM Engineers
-		WHERE resp_district = District AND eng_id not in (SELECT eng_id
+		WHERE resp_district = District AND eng_id NOT IN(SELECT eng_id
 										      FROM Engineers
 										      NATURAL JOIN Installations
 										      WHERE Install_date = InDate AND resp_district = District);
@@ -98,12 +98,12 @@ BEGIN
 	isInstalled := FALSE;
 	minLoad := 4;
 	
-	/*initialize engDistrict*/
+	/*initialize engDistrict, set errCode = 1 in exception handling part if record not found*/
 	SELECT Resp_district INTO engDistrict
 		FROM Engineers
 		WHERE Eng_ID = EID;
 	
-	/*initialize subDistrict and instDate*/
+	/*initialize subDistrict and instDate, set errCode = 1 in exception handling part if record not found*/
 	SELECT District, Prefer_install_date 
 		INTO subDistrict, instDate
 		FROM Subscriptions
@@ -132,7 +132,7 @@ BEGIN
 		IF workLoad < 4 THEN
 
 			FOR R IN(
-				SELECT DISTINCT Eng_ID
+				SELECT Eng_ID
 					FROM Engineers
 					WHERE Resp_district = engDistrict
 			) LOOP
@@ -177,11 +177,12 @@ CREATE OR REPLACE PROCEDURE AssignInstTaskA
 BEGIN
 	NotAssigned := 0;
 	ErrCode := 1;
+	/*assign task in same district*/
 	FOR R IN(
 		SELECT Sub_ID, Prefer_install_date, District
 		FROM Subscriptions
 		WHERE Sub_ID NOT IN (SELECT Sub_ID FROM Installations))LOOP
-		charDate := to_char(R.Prefer_install_date, 'yymmdd');
+		charDate := to_char(R.Prefer_install_date, 'YYMMDD');
 		ErrCode := 1;
 		FindAvailEngD(charDate, R.District, availEngList);
 		LOOP
@@ -192,12 +193,15 @@ BEGIN
 		END LOOP;
 		CLOSE availEngList;
 	END LOOP;
+	
+	/*assign task in different district*/
 	FOR R IN(
 		SELECT Sub_ID, Prefer_install_date, District
 		FROM Subscriptions
 		WHERE Sub_id not in (SELECT Sub_id FROM Installations))LOOP
-			charDate := to_char(R.Prefer_install_date, 'yymmdd');
+			charDate := to_char(R.Prefer_install_date, 'YYMMDD');
 			ErrCode := 1;
+			
 			IF R.District = 'HK' OR R.District = 'NT' THEN
 				FindAvailEngD(charDate, 'KLN', klnAvailEngList);
 				LOOP
@@ -249,8 +253,8 @@ CREATE OR REPLACE PROCEDURE InstTaskAssignStat
 startDate DATE;
 endDate DATE;
 BEGIN
-	startDate := to_date(SDate, 'yymmdd');
-	endDate := to_date(EDate,  'yymmdd');
+	startDate := to_date(SDate, 'YYMMDD');
+	endDate := to_date(EDate,  'YYMMDD');
 	OPEN Result FOR
 		SELECT Eng_ID, Name, COUNT(Task_ID)
 		FROM Engineers
@@ -272,25 +276,22 @@ CREATE OR REPLACE PROCEDURE InstTaskDistriStat
 startDate	DATE;
 endDate	DATE;
 BEGIN
-	startDate := to_date(SDate, 'yymmdd');
-	endDate := to_date(EDate, 'yymmdd');
+	startDate := to_date(SDate, 'YYMMDD');
+	endDate := to_date(EDate, 'YYMMDD');
 	OPEN Result FOR
-		SELECT 'HK', (SELECT COUNT(i.Task_ID)
-			FROM Subscriptions s
-			LEFT OUTER JOIN Installations i
-			ON s.Sub_ID = i.Sub_ID
-			WHERE s.District = 'HK' AND ((i.Install_date >= startDate AND i.Install_date <= endDate) OR i.Install_date IS NULL)) FROM DUAL
+		SELECT 'HK', (SELECT COUNT(Task_ID)
+			FROM Subscriptions
+			NATURAL JOIN Installations
+			WHERE District = 'HK' AND (Install_date >= startDate AND Install_date <= endDate)) FROM DUAL
 		UNION ALL
-		SELECT 'KLN', (SELECT COUNT(i.Task_ID)
-			FROM Subscriptions s
-			LEFT OUTER JOIN Installations i
-			ON s.Sub_ID = i.Sub_ID
-			WHERE s.District = 'KLN' AND ((i.Install_date >= startDate AND i.Install_date <= endDate) OR i.Install_date IS NULL)) FROM DUAL
+		SELECT 'KLN', (SELECT COUNT(Task_ID)
+			FROM Subscriptions
+			NATURAL JOIN Installations
+			WHERE District = 'KLN' AND (Install_date >= startDate AND Install_date <= endDate)) FROM DUAL
 		UNION ALL
-		SELECT 'NT', (SELECT COUNT(i.Task_ID)
-			FROM Subscriptions s
-			LEFT OUTER JOIN Installations i
-			ON s.Sub_ID = i.Sub_ID
-			WHERE s.District = 'NT' AND ((i.Install_date >= startDate AND i.Install_date <= endDate) OR i.Install_date IS NULL)) FROM DUAL;
+		SELECT 'NT', (SELECT COUNT(Task_ID)
+			FROM Subscriptions
+			NATURAL JOIN Installations
+			WHERE District = 'NT' AND (Install_date >= startDate AND Install_date <= endDate)) FROM DUAL;
 END;
 /
