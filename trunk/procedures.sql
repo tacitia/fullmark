@@ -134,7 +134,7 @@ BEGIN
 			FOR R IN(
 				SELECT DISTINCT Eng_ID
 					FROM Engineers
-					WHERE Resp_district = subDistrict
+					WHERE Resp_district = engDistrict
 			) LOOP
 				SELECT DISTINCT COUNT(*) INTO tempLoad
 					FROM Subscriptions NATURAL JOIN Installations NATURAL JOIN Engineers
@@ -143,38 +143,11 @@ BEGIN
 				minLoad := tempLoad;
 				END IF;
 			END LOOP;		
-			IF minLoad >= workLoad THEN
-				/*check the district*/
-				IF subDistrict = engDistrict THEN
-					INSERT INTO Installations
-						VALUES(taskID, SID, EID, instDate);
-				ELSE
-					IF (minLoad >= 4 
-						AND ((engDistrict = 'HK' AND subDistrict = 'KLN')
-							OR (engDistrict = 'KLN' AND (subDistrict = 'HK' OR subDistrict = 'NT'))
-							OR (engDistrict = 'NT' AND subDistrict = 'KLN'))) THEN
-										FOR R IN(
-												SELECT DISTINCT ENG_ID
-													FROM Engineers
-													WHERE Resp_district = engDistrict
-												) LOOP
-													SELECT DISTINCT COUNT(*) INTO tempLoad
-													FROM Subscriptions NATURAL JOIN Installations NATURAL JOIN Engineers
-													WHERE Eng_ID = R.ENG_ID AND Prefer_install_date = instDate;
-													IF tempLoad < minLoad THEN
-													minLoad := tempLoad;
-													END IF;
-												END LOOP;
-										IF minLoad >= workLoad THEN
-											INSERT INTO Installations
-												VALUES(taskID, SID, EID, instDate);
-										ELSE
-											ErrCode := 1;
-										END IF;
-					ELSE
-						ErrCode := 1;
-					END IF;
-				END IF;
+			IF (minLoad >= workLoad AND (subDistrict = engDistrict 
+								    OR ((engDistrict = 'HK' AND subDistrict = 'KLN')
+									    OR (engDistrict = 'KLN' AND (subDistrict = 'HK' OR subDistrict = 'NT'))
+								            OR (engDistrict = 'NT' AND subDistrict = 'KLN'))))THEN
+					INSERT INTO Installations VALUES(taskID, SID, EID, instDate);
 			ELSE
 				ErrCode := 1;
 			END IF;
