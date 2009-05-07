@@ -41,9 +41,9 @@ if($function == "auto") {
 	ocibindbyname($parse, "Errcode", $errCode);
 	ociexecute($parse);
 	if ($errCode == 0) {
-		echo "<h2>Assignment is completed successfully!<\h2>\n";
+		echo "<h2>Assignment is completed successfully!</h2>\n";
 	} else {
-		echo "<h2>There is a problem on the assignment!<\h2>\n";
+		echo "<h2>There is a problem on the assignment!</h2>\n";
 	}
 }
 ?> 
