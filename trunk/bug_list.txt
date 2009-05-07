@@ -12,3 +12,5 @@ bugs:
 4. in procedure 9 (fixed)
 
 5. change wrong spelling "assgin" to be "assign"
+
+6. assignInstTask (bugs fixed )
