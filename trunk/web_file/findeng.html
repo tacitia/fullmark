@@ -1,0 +1,29 @@
+<html>
+<head>
+	<title>Find An Available Engineer</title>
+</head>
+<body><center>
+	<h1>Installation Assignment System</h1><hr />
+	<h2>Find An Available Engineer</h2>
+	<form method="POST" action="showeng.php">
+	<table>
+	<tr>
+		<td>Input an installation date:</td>
+		<td><input type="text" name="instdate" size=6 /><small>(yymmdd)</small></td>
+	</tr>
+	<tr>
+		<td>Select a district:</td>
+		<td><select name="on_after">
+			<option>All</option>
+			<option>HK</option>
+			<option>KLN</option>
+			<option>NT</option>
+		</select></td>
+	</tr>
+	</table><hr />
+	<input type="submit" value="Submit" />
+	</form>
+	<form method="POST" action="main.html">
+		<input type="submit" value="Back" />
+	</form>
+</center></body>
