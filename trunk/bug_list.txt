@@ -10,4 +10,4 @@ bugs:
 
 5. change wrong spelling "assgin" to be "assign"
 
-6. assignInstTask (bugs fixed ) bug: hk sub can be assigned to KLN engineer even if there is an hk engineer is available
+6. assignInstTask (bugs fixed ) bug: assignment will be successful as long as the workload is less than 4
