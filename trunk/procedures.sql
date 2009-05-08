@@ -130,27 +130,7 @@ BEGIN
 			WHERE Eng_ID = EID AND Install_date = instDate;
 		/* check workload is less than 4*/
 		IF workLoad < 4 THEN
-
-			FOR R IN(
-				SELECT Eng_ID
-					FROM Engineers
-					WHERE Resp_district = engDistrict
-			) LOOP
-				SELECT DISTINCT COUNT(*) INTO tempLoad
-					FROM Subscriptions NATURAL JOIN Installations NATURAL JOIN Engineers
-					WHERE Eng_ID = R.Eng_ID AND Prefer_install_date = instDate;
-				IF tempLoad < minLoad THEN
-				minLoad := tempLoad;
-				END IF;
-			END LOOP;		
-			IF (minLoad >= workLoad AND (subDistrict = engDistrict 
-								    OR ((engDistrict = 'HK' AND subDistrict = 'KLN')
-									    OR (engDistrict = 'KLN' AND (subDistrict = 'HK' OR subDistrict = 'NT'))
-								            OR (engDistrict = 'NT' AND subDistrict = 'KLN'))))THEN
-					INSERT INTO Installations VALUES(taskID, SID, EID, instDate);
-			ELSE
-				ErrCode := 1;
-			END IF;
+			INSERT INTO Installations VALUES(taskID, SID, EID, instDate);
 		ELSE
 			ErrCode := 1;
 		END IF;
