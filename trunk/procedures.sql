@@ -93,7 +93,6 @@ CREATE OR REPLACE PROCEDURE AssignInstTask
 	tempLoad	NUMBER;
 	taskID	Installations.Task_ID%type;
 BEGIN
-
 	ErrCode := 0;
 	isInstalled := FALSE;
 	minLoad := 4;
@@ -154,21 +153,34 @@ CREATE OR REPLACE PROCEDURE AssignInstTaskA
 	hkAvailEngList	SYS_REFCURSOR;
 	klnAvailEngList	SYS_REFCURSOR;
 	ntAvailEngList	SYS_REFCURSOR;
+	minLoad	NUMBER;
 BEGIN
 	NotAssigned := 0;
 	ErrCode := 1;
+	minLoad := 4;
 	/*assign task in same district*/
-	FOR R IN(
+	FOR R1 IN(
 		SELECT Sub_ID, Prefer_install_date, District
 		FROM Subscriptions
 		WHERE Sub_ID NOT IN (SELECT Sub_ID FROM Installations))LOOP
-		charDate := to_char(R.Prefer_install_date, 'YYMMDD');
+		charDate := to_char(R1.Prefer_install_date, 'YYMMDD');
 		ErrCode := 1;
-		FindAvailEngD(charDate, R.District, availEngList);
+		FindAvailEngD(charDate, R1.District, availEngList);
 		LOOP
 			FETCH availEngList INTO EID, EName, workLoad;
 			EXIT WHEN availEngList%NOTFOUND;
-			AssignInstTask(R.Sub_ID, EID, ErrCode);
+			IF workLoad <= minLoad THEN
+				minLoad := workLoad;
+			END IF;
+		END LOOP;
+		CLOSE availEngList;
+		FindAvailEngD(charDate, R1.District, availEngList);
+		LOOP
+			FETCH availEngList INTO EID, EName, workLoad;
+			EXIT WHEN availEngList%NOTFOUND;
+			IF workLoad = minLoad THEN
+				AssignInstTask(R1.Sub_ID, EID, ErrCode);
+			END IF;
 			EXIT WHEN ErrCode = 0;
 		END LOOP;
 		CLOSE availEngList;
@@ -181,13 +193,24 @@ BEGIN
 		WHERE Sub_id not in (SELECT Sub_id FROM Installations))LOOP
 			charDate := to_char(R.Prefer_install_date, 'YYMMDD');
 			ErrCode := 1;
-			
+			minLoad := 4;
 			IF R.District = 'HK' OR R.District = 'NT' THEN
 				FindAvailEngD(charDate, 'KLN', klnAvailEngList);
 				LOOP
 					FETCH klnAvailEngList INTO EID, EName, workLoad;
 					EXIT WHEN klnAvailEngList%NOTFOUND;
-					AssignInstTask(R.Sub_ID, EID, ErrCode);
+					IF workLoad <= minLoad THEN
+						minLoad := workLoad;
+					END IF;
+				END LOOP;	
+				CLOSE klnAvailEngList;
+				FindAvailEngD(charDate, 'KLN', klnAvailEngList);
+				LOOP
+					FETCH klnAvailEngList INTO EID, EName, workLoad;
+					EXIT WHEN klnAvailEngList%NOTFOUND;
+					IF workLoad <= minLoad THEN
+						AssignInstTask(R.Sub_ID, EID, ErrCode);
+					END IF;
 					EXIT WHEN ErrCode = 0;
 				END LOOP;
 				CLOSE klnAvailEngList;
@@ -196,8 +219,19 @@ BEGIN
 				FindAvailEngD(charDate, 'HK', hkAvailEngList);
 				LOOP
 					FETCH hkAvailEngList INTO EID, EName, workLoad;
-					EXIT WHEN klnAvailEngList%NOTFOUND;
-					AssignInstTask(R.Sub_ID, EID, ErrCode);
+					EXIT WHEN hkAvailEngList%NOTFOUND;
+					IF workLoad <= minLoad THEN
+						minLoad := workLoad;
+					END IF;
+				END LOOP;	
+				CLOSE hkAvailEngList;
+				FindAvailEngD(charDate, 'HK', hkAvailEngList);
+				LOOP
+					FETCH hkAvailEngList INTO EID, EName, workLoad;
+					EXIT WHEN hkAvailEngList%NOTFOUND;
+					IF workLoad <= minLoad THEN
+						AssignInstTask(R.Sub_ID, EID, ErrCode);
+					END IF;
 					EXIT WHEN ErrCode = 0;
 				END LOOP;
 				CLOSE hkAvailEngList;
@@ -206,13 +240,23 @@ BEGIN
 					LOOP
 						FETCH ntAvailEngList INTO EID, EName, workLoad;
 						EXIT WHEN ntAvailEngList%NOTFOUND;
-						AssignInstTask(R.Sub_ID, EID, ErrCode);
+						IF workLoad <= minLoad THEN
+							minLoad := workLoad;
+						END IF;
+					END LOOP;	
+					CLOSE ntAvailEngList;
+					FindAvailEngD(charDate, 'NT', ntAvailEngList);
+					LOOP
+						FETCH ntAvailEngList INTO EID, EName, workLoad;
+						EXIT WHEN ntAvailEngList%NOTFOUND;
+						IF workLoad <= minLoad THEN
+							AssignInstTask(R.Sub_ID, EID, ErrCode);
+						END IF;
 						EXIT WHEN ErrCode = 0;
 					END LOOP;
 					CLOSE ntAvailEngList;
 				END IF;
 			END IF;
-
 			IF ErrCode = 1 THEN
 				NotAssigned := NotAssigned + 1;
 			END IF; 
