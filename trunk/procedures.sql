@@ -157,7 +157,6 @@ CREATE OR REPLACE PROCEDURE AssignInstTaskA
 BEGIN
 	NotAssigned := 0;
 	ErrCode := 1;
-	minLoad := 4;
 	/*assign task in same district*/
 	FOR R1 IN(
 		SELECT Sub_ID, Prefer_install_date, District
@@ -165,6 +164,7 @@ BEGIN
 		WHERE Sub_ID NOT IN (SELECT Sub_ID FROM Installations))LOOP
 		charDate := to_char(R1.Prefer_install_date, 'YYMMDD');
 		ErrCode := 1;
+		minLoad := 4;
 		FindAvailEngD(charDate, R1.District, availEngList);
 		LOOP
 			FETCH availEngList INTO EID, EName, workLoad;
