@@ -1,0 +1,21 @@
+1.Solution:
+fun foo x y = x (x y)
+foo x = f    ----> type(foo) = type(x) -> type(f)
+f y = z      ----> type(f) = type(y) -> type(z)
+x (x y) = z  ----> type(x) = type(y) -> type(z) and type(y) = type(z)
+Suppose type(y) = type(z) = 'a, then we can get
+type(foo) = type(x) -> type(f) = (type(y) -> type(z)) -> type(y) -> type(z)
+          = ('a -> 'a) -> 'a -> 'a
+2.Solution:
+fun foo2 f y [] = y
+  | foo2 f y (x::xs) = foo2 f (f(x, y)) xs;
+foo2 f = A    ---> type(foo2) = type(f) -> type(A)
+A y = B       ---> type(A) = type(y) -> type(B)
+B [] = y      ---> type(B) = type([]) -> type(y)
+foo2 f y (x::xs) = foo2 f (f(x, y)) xs
+             ----> type(f) = (type(x) * type(y)) -> type(y)
+                   xs is type(x) list
+Suppose type(x) = 'a and type(y) = 'b, then we can get
+type(foo2) = type(f) -> type(A) = (type(x) * type(y) -> type(y)) -> type(y) -> type(B)
+           = (type(x) * type(y) -> type(y)) -> type(y) -> type([]) -> type(y)
+           = ('a * 'b -> 'b) -> 'b -> 'a list -> 'b

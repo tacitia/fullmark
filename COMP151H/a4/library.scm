@@ -1,0 +1,7 @@
+(define > (lambda (x y) (< y x)))
+(define >= (lambda (x y) (not (< x y))))
+(define <= (lambda (x y) (not (< y x))))
+(define = (lambda (x y) (if (< x y) 0 (not (< y x)))))
+(define abs (lambda (x) (if (< x 0) (- 0 x) x)))
+(define factorial (lambda (x) (if (< x 2) 1 (* x (factorial (- x 1))))))
+(define for-each (lambda (f a) (if (not (nullp a)) (f (eval(car a)))) (if (not (nullp a)) (for-each f (cdr a)) (quote ()))))
